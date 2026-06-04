@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>南京两天旅行时间规划网站</title>
+
+  <!-- SEO 基础元标签 -->
+  <meta name="description" content="南京两天旅行详细时间规划，滚动展示每日行程节点和地点，方便掌握时间安排。" />
+  <meta name="author" content="Claude AI" />
+  <meta name="robots" content="index,follow" />
+
+  <style>
+    /* 简洁干净的设计风格，兼容性好 */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body, h1, h2, h3, p, a {
+      margin: 0; padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      color: #1d1d1f;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      user-select: none;
+    }
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 10px 60px;
+      overflow-x: hidden;
+    }
+    /* 容器 */
+    .container {
+      background: #fff;
+      max-width: 720px;
+      width: 100%;
+      border-radius: 22px;
+      box-shadow: 0 22px 36px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+      min-height: 480px;
+      overflow: hidden;
+    }
+    /* 头部 */
+    header {
+      padding: 28px 48px 20px;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+      user-select: text;
+    }
+    header h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      letter-spacing: 0.7px;
+      color: #111;
+    }
+    header p {
+      font-size: 1.08rem;
+      font-weight: 400;
+      color: #555;
+      opacity: 0.85;
+      letter-spacing: 0.2px;
+    }
+    /* 主要布局 */
+    .timeline-wrapper {
+    height: 960px; 
+    overflow: visible;
+    display: flex;
+    }
+
+    /* 时间轴 */
+    nav.timeline {
+      width: 90px;
+      background: #0a84ff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 0;
+      position: relative;
+      user-select: none;
+    }
+    nav.timeline::after {
+      content: '';
+      position: absolute;
+      top: 24px;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5px;
+      background: rgba(255 255 255 / 0.3);
+      border-radius: 2.5px;
+      z-index: 0;
+    }
+    .timeline-point {
+      position: relative;
+      width: 28px;
+      height: 28px;
+      margin: 38px 0;
+      border-radius: 50%;
+      background: rgba(255 255 255 / 0.5);
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      z-index: 1;
+      box-shadow: 0 0 8px rgba(255 255 255 / 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      outline-offset: 3px;
+    }
+    .timeline-point.active {
+      background: white;
+      box-shadow: 0 0 16px 2px rgba(255 255 255 / 0.9);
+      transform: scale(1.3);
+    }
+    .timeline-point:hover:not(.active),
+    .timeline-point:focus-visible:not(.active) {
+      background: rgba(255 255 255 / 0.75);
+      transform: scale(1.1);
+      outline: none;
+    }
+    .time-label {
+      margin-top: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: white;
+      opacity: 0.85;
+      text-align: center;
+      width: 90px;
+      user-select: none;
+      font-variant-numeric: tabular-nums;
+      transition: opacity 0.3s ease, font-size 0.3s ease, font-weight 0.3s ease;
+      pointer-events: none;
+      line-height: 1.2;
+    }
+    .timeline-point.active + .time-label {
+      opacity: 1;
+      font-weight: 900;
+      font-size: 1.1rem;
+    }
+
+    /* 内容区 */
+    .content-wrapper {
+      flex: 1;
+      padding: 48px 56px;
+      position: relative;
+      overflow: hidden;
+      user-select: text;
+    }
+    .content-slide {
+      position: absolute;
+      top: 48px;
+      left: 0;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+      pointer-events: none;
+    }
+    .content-slide.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .content-slide h2 {
+      font-weight: 800;
+      color: #0a84ff;
+      font-size: 2.2rem;
+      margin-bottom: 16px;
+      letter-spacing: 0.6px;
+      user-select: text;
+    }
+    .content-slide p {
+      font-size: 1.18rem;
+      line-height: 1.6;
+      color: #222;
+      max-width: 600px;
+      letter-spacing: 0.2px;
+    }
+    .content-slide a {
+      color: #0a84ff;
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      transition: border-color 0.3s ease;
+    }
+    .content-slide a:hover,
+    .content-slide a:focus {
+      border-color: #0a84ff;
+      outline: none;
+    }
+
+    /* 页脚 */
+    footer {
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+      margin-top: 40px;
+      user-select: none;
+    }
+
+    /* 响应式支持 */
+    @media (max-width: 650px) {
+      .container {
+        max-width: 100%;
+        border-radius: 14px;
+      }
+      header h1 {
+        font-size: 2rem;
+      }
+      header p {
+        font-size: 0.95rem;
+      }
+      .timeline-wrapper {
+        height: auto;
+        flex-direction: column;
+      }
+      nav.timeline {
+        width: 100%;
+        height: 90px;
+        padding: 16px 0;
+        flex-direction: row;
+        justify-content: space-around;
+        position: relative;
+      }
+      nav.timeline::after {
+        height: 4px;
+        width: calc(100% - 40px);
+        top: 50%;
+        left: 20px;
+        transform: translateY(-50%);
+        border-radius: 2px;
+      }
+      .timeline-point {
+        margin: 0;
+      }
+      .time-label {
+        width: auto;
+        margin-top: 6px;
+        font-size: 0.85rem;
+        line-height: 1.1;
+      }
+      .content-wrapper {
+        padding: 32px 24px 40px;
+        position: relative;
+        height: auto;
+        min-height: 260px;
+      }
+      .content-slide h2 {
+        font-size: 1.6rem;
+      }
+      .content-slide p {
+        font-size: 1rem;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="main" aria-label="南京两天旅行时间线">
+    <header>
+      <h1>南京两天旅行规划 <small style="font-weight:400; color:#888; font-size:1rem; margin-left:8px;">滚动查看每日时间节点</small></h1>
+      <p>细致设计每个时间点的游玩与休息，让您的旅程流畅舒适。</p>
+    </header>
+    <div class="timeline-wrapper">
+      <nav class="timeline" aria-orientation="vertical" role="list" aria-label="旅行时间节点">
+        <div class="timeline-point active" tabindex="0" aria-current="true" aria-label="第一天 12:00 午餐"></div>
+        <div class="time-label">第一天<br>12:00</div>
+
+        <div class="timeline-point" tabindex="0" aria-label="第一天 14:00 校园游览"></div>
+        <div class="time-label">第一天<br>14:00</div>
+
+        <div class="timeline-point" tabindex="0" aria-label="第一天 傍晚 玄武湖"></div>
+        <div class="time-label">第一天<br>傍晚</div>
+
+        <div class="timeline-point" tabindex="0" aria-label="第二天 11:30 午餐"></div>
+        <div class="time-label">第二天<br>11:30</div>
+
+        <div class="timeline-point" tabindex="0" aria-label="第二天 14:00 动物园"></div>
+        <div class="time-label">第二天<br>14:00</div>
+
+        <div class="timeline-point" tabindex="0" aria-label="第二天 17:30 返回"></div>
+        <div class="time-label">第二天<br>17:30</div>
+      </nav>
+      <main class="content-wrapper" tabindex="0" aria-live="polite">
+        <article class="content-slide active" role="region" aria-label="第一天 12点午餐">
+          <h2>第一天 · 12:00 - 午餐</h2>
+          <p>在<a href="https://map.baidu.com/search/La%20Mia%20Casa%20意式餐厅" target="_blank" rel="noopener noreferrer">La Mia Casa 意式餐厅</a>。</p>
+        </article>
+
+        <article class="content-slide" role="region" aria-label="第一天 14点校园游览">
+          <h2>第一天 · 14:00 - 南京大学鼓楼校区参观</h2>
+          <p>漫步在<a href="https://map.baidu.com/search/南京大学鼓楼校区" target="_blank" rel="noopener noreferrer">南京大学鼓楼校区</a>。</p>
+        </article>
+
+        <article class="content-slide" role="region" aria-label="第一天 傍晚玄武湖游览">
+          <h2>第一天 · 傍晚 - 玄武湖公园游览</h2>
+          <p>傍晚时分，前往<a href="https://map.baidu.com/search/玄武湖公园" target="_blank" rel="noopener noreferrer">玄武湖公园</a>。</p>
+        </article>
+
+        <article class="content-slide" role="region" aria-label="第二天 11点半午餐">
+          <h2>第二天 · 11:30 - 午餐</h2>
+          <p>于<a href="https://map.baidu.com/search/滨寿司 玄武招商花园城店" target="_blank" rel="noopener noreferrer">滨寿司（玄武招商花园城店）</a>。</p>
+        </article>
+
+        <article class="content-slide" role="region" aria-label="第二天 14点红山动物园参观">
+          <h2>第二天 · 14:00 - 红山动物园参观</h2>
+          <p>游览<a href="https://map.baidu.com/search/红山动物园" target="_blank" rel="noopener noreferrer">红山动物园</a>。</p>
+        </article>
+
+        <article class="content-slide" role="region" aria-label="第二天 17点半返回">
+          <h2>第二天 · 17:30 - 返回南京南站</h2>
+          <p>结束行程</p>
+        </article>
+      </main>
+    </div>
+  </div>
+
+  <footer>
+    南京旅行规划 &nbsp;&bull;&nbsp; 由 Claude AI 助力
+  </footer>
+
+  <script>
+    (() => {
+      const points = document.querySelectorAll('.timeline-point');
+      const slides = document.querySelectorAll('.content-slide');
+
+      let currentIndex = 0;
+
+      function setActive(index) {
+        if(index === currentIndex) return;
+        points.forEach((point, i) => {
+          if(i === index) {
+            point.classList.add('active');
+            point.setAttribute('aria-current', 'true');
+            slides[i].classList.add('active');
+            slides[i].setAttribute('tabindex', '0');
+            slides[i].focus();
+          } else {
+            point.classList.remove('active');
+            point.removeAttribute('aria-current');
+            slides[i].classList.remove('active');
+            slides[i].removeAttribute('tabindex');
+          }
+        });
+        currentIndex = index;
+      }
+
+      // 节流锁
+      let scrollTimeout;
+
+      function onScroll(e) {
+        e.preventDefault();
+        if (scrollTimeout) return;
+
+        scrollTimeout = setTimeout(() => {
+          scrollTimeout = null;
+        }, 550);
+
+        const delta = e.deltaY || -e.wheelDelta || e.detail;
+
+        if(delta > 0) { // 向下滚动
+          const nextIndex = Math.min(currentIndex + 1, points.length - 1);
+          setActive(nextIndex);
+        } else if(delta < 0) { // 向上滚动
+          const prevIndex = Math.max(currentIndex - 1, 0);
+          setActive(prevIndex);
+        }
+      }
+
+      // 监听滚轮事件
+      window.addEventListener('wheel', onScroll, { passive: false });
+
+      // 触屏支持滑动切换
+      let touchStartY = null;
+      window.addEventListener('touchstart', e => {
+        if(e.touches.length === 1) {
+          touchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+      window.addEventListener('touchend', e => {
+        if(touchStartY === null) return;
+        const diff = touchStartY - e.changedTouches[0].clientY;
+        if(Math.abs(diff) > 30) {
+          if(diff > 0) {
+            const nextIndex = Math.min(currentIndex + 1, points.length -1);
+            setActive(nextIndex);
+          } else {
+            const prevIndex = Math.max(currentIndex - 1, 0);
+            setActive(prevIndex);
+          }
+        }
+        touchStartY = null;
+      }, { passive: true });
+
+      // 时间点点击和键盘切换支持
+      points.forEach((point, i) => {
+        point.addEventListener('click', () => setActive(i));
+        point.addEventListener('keydown', e => {
+          if(e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setActive(i);
+          }
+        });
+      });
+
+      // 初始化第一个元素获得焦点
+      slides[0].focus();
+    })();
+  </script>
+
+</body>
+</html>
